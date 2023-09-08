@@ -103,6 +103,9 @@ func NewOpenAIReverseProxy() *httputil.ReverseProxy {
 
 		log.Printf("proxying request [%s] %s -> %s", model, originURL, req.URL.String())
 	}
+	// simply try to print addtional log
+	log.Printf("TS print this, hello world!")
+
 	// Create a new http.Transport
 	transport := &http.Transport{
 		// Proxy: http.ProxyURL(proxyURL),
@@ -117,8 +120,9 @@ func NewOpenAIReverseProxy() *httputil.ReverseProxy {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	proxyEnv := os.Getenv("http_proxy") // or "HTTP_PROXY", depending on your environment
+	proxyEnv := os.Getenv("HTTP_PROXY") // or "HTTP_PROXY", depending on your environment
 	if proxyEnv != "" {
+		log.Printf("proxyEnv is not empty!")
 		proxyURL, err := url.Parse(proxyEnv)
 		if err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
@@ -126,6 +130,8 @@ func NewOpenAIReverseProxy() *httputil.ReverseProxy {
 		} else {
 			log.Printf("Failed to parse proxy URL: %v", err)
 		}
+	} else {
+		log.Printf("proxyEnv is empty!")
 	}
 
 	return &httputil.ReverseProxy{
