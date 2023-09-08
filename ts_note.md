@@ -1,0 +1,1 @@
+docker build . -t azure-openai-proxy:1.0.0_ts_try_build

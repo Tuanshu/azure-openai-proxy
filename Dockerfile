@@ -1,6 +1,6 @@
 # Build step
 FROM golang:1.18 AS builder
-ENV GOPROXY=https://goproxy.cn,direct
+# ENV GOPROXY=https://goproxy.cn,direct
 RUN mkdir -p /build
 WORKDIR /build
 COPY . .
@@ -12,7 +12,7 @@ RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -
     ca-certificates && \
     rm -rf /var/lib/apt/lists/* \
 
-EXPOSE 8080
+    EXPOSE 8080
 WORKDIR /app
 COPY --from=builder /build/azure-openai-proxy /app/azure-openai-proxy
 ENTRYPOINT ["/app/azure-openai-proxy"]
