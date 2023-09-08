@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -12,6 +13,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/tidwall/gjson"
 )
@@ -101,7 +103,35 @@ func NewOpenAIReverseProxy() *httputil.ReverseProxy {
 
 		log.Printf("proxying request [%s] %s -> %s", model, originURL, req.URL.String())
 	}
-	return &httputil.ReverseProxy{Director: director}
+	// Create a new http.Transport
+	transport := &http.Transport{
+		// Proxy: http.ProxyURL(proxyURL),
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	proxyEnv := os.Getenv("http_proxy") // or "HTTP_PROXY", depending on your environment
+	if proxyEnv != "" {
+		proxyURL, err := url.Parse(proxyEnv)
+		if err == nil {
+			transport.Proxy = http.ProxyURL(proxyURL)
+			log.Printf("Fproxy URL: %s", proxyURL)
+		} else {
+			log.Printf("Failed to parse proxy URL: %v", err)
+		}
+	}
+
+	return &httputil.ReverseProxy{
+		Director:  director,
+		Transport: transport,
+	}
 }
 
 func GetDeploymentByModel(model string) string {
